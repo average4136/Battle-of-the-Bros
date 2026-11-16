@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session setup | Battle of the Bros</title>
+  </head>
+  <body>
+    <main>
+      <h1>Session setup</h1>
+      <p>Choose the format, how many games, and which games, then randomize the order.</p>
+      <!-- Filled in by /src/pages/setup.ts -->
+      <div id="app"></div>
+      <h2>Go to</h2>
+      <ul>
+        <li><a href="/pages/handicaps.html">Handicap setup</a></li>
+        <li><a href="/pages/games.html">Game list / add custom game</a></li>
+        <li><a href="/pages/lobby.html">Back to lobby</a></li>
+      </ul>
+    </main>
+    <!-- type="module" lets the script use import/export; Vite resolves the .ts file. -->
+    <script type="module" src="/src/pages/setup.ts"></script>
+  </body>
+</html>
