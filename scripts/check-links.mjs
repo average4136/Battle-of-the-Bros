@@ -41,7 +41,9 @@ for (const m of routes.matchAll(/:\s*'(\/[^']*)'/g)) links.push({ from: 'src/rou
 let broken = 0;
 const external = new Set();
 for (const { from, href } of links) {
-  if (/^https?:\/\//.test(href)) {
+  if (href.startsWith('data:')) {
+    continue; // inline data, nothing to fetch
+  } else if (/^https?:\/\//.test(href)) {
     external.add(href);
   } else if (href.startsWith('/')) {
     if (!existsSync(targetFile(href))) {
@@ -54,6 +56,6 @@ for (const { from, href } of links) {
   }
 }
 
-console.log(`Checked ${links.length} internal/asset links; ${broken} broken.`);
+console.log(`Checked ${links.length} links; ${broken} broken.`);
 if (external.size) console.log(`External links (not checked): ${[...external].join(', ')}`);
 process.exit(broken ? 1 : 0);

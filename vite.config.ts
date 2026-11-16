@@ -7,11 +7,12 @@ import { resolve } from 'node:path';
 // though, Vite only bundles the pages you list as "inputs", so we list
 // index.html plus everything in pages/ automatically. Adding a new page is
 // then just "create pages/whatever.html" with no config change.
-const pageFiles = readdirSync(resolve(__dirname, 'pages')).filter((f) => f.endsWith('.html'));
+// import.meta.dirname = the folder this config file is in (the repo root).
+const pageFiles = readdirSync(resolve(import.meta.dirname, 'pages')).filter((f) => f.endsWith('.html'));
 
-const input: Record<string, string> = { home: resolve(__dirname, 'index.html') };
+const input: Record<string, string> = { home: resolve(import.meta.dirname, 'index.html') };
 for (const file of pageFiles) {
-  input[file.replace(/\.html$/, '')] = resolve(__dirname, 'pages', file);
+  input[file.replace(/\.html$/, '')] = resolve(import.meta.dirname, 'pages', file);
 }
 
 export default defineConfig({
