@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Empty icon: stops the browser requesting /favicon.ico (a 404). Real icon comes with the UI design. -->
+    <link rel="icon" href="data:," />
+    <title>Game list | Battle of the Bros</title>
+  </head>
+  <body>
+    <main>
+      <h1>Game list</h1>
+      <p>Curated browser games plus custom games you add. The site links to games; it never hosts them.</p>
+      <!-- Filled in by /src/pages/games.ts -->
+      <div id="app"></div>
+      <h2>Go to</h2>
+      <ul>
+        <li><a href="/pages/setup.html">Session setup</a></li>
+        <li><a href="/">Home</a></li>
+      </ul>
+    </main>
+    <!-- type="module" lets the script use import/export; Vite resolves the .ts file. -->
+    <script type="module" src="/src/pages/games.ts"></script>
+  </body>
+</html>

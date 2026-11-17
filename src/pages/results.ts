@@ -1,0 +1,44 @@
+import { appRoot, h, mount, openNote } from '../dom';
+import { renderChrome } from '../page-chrome';
+import { goTo, PAGES } from '../routes';
+import { roundHistory, scoreTable } from '../score-view';
+import { loadState, saveState, usernameOf } from '../state';
+
+renderChrome();
+const state = loadState();
+const root = appRoot();
+const session = state.session;
+
+if (!session || session.status !== 'finished') {
+  mount(root, 
+    h('p', {}, 'No finished session to show. '),
+    h('p', {}, session ? h('a', { href: PAGES.round }, 'Back to the current round') : h('a', { href: PAGES.lobby }, 'Go to the lobby')),
+  );
+} else {
+  const s = session;
+  mount(root, 
+    h('h2', {}, s.winnerId ? `${usernameOf(state, s.winnerId)} wins!` : "It's a tie!"),
+    s.winnerId ? null : openNote('how should a tied session be broken (a sudden-death game?), or does it just stay a tie?'),
+    scoreTable(state, s),
+    h('h2', {}, 'Rounds'),
+    roundHistory(state, s),
+    h('h2', {}, 'Handicaps used'),
+    s.handicaps.length ? h('ul', {}, ...s.handicaps.map((hc) => h('li', {}, hc.description))) : h('p', {}, 'None.'),
+    h('h2', {}, 'Records'),
+    s.playerIds.length === 2
+      ? h('p', {}, 'Head-to-head record and win streaks updated. ', h('a', { href: PAGES.friends }, 'See Friends / Leaderboard'))
+      : openNote('how do records and leaderboards count a 3–4 player session? Not recorded for now.'),
+    openNote('should we ask "did the handicaps feel fair?" here to tune future suggestions?'),
+    h('h2', {}, 'What next?'),
+    h('p', {}, h('button', {
+      type: 'button',
+      onclick: () => {
+        // Same room and players; just a new session.
+        state.session = undefined;
+        saveState(state);
+        goTo('setup');
+      },
+    }, 'Play again with the same room')),
+    h('p', {}, h('a', { href: PAGES.lobby }, 'Back to the lobby'), ' · ', h('a', { href: PAGES.home }, 'Home')),
+  );
+}

@@ -1,44 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <style>
-            h1 {
-                margin-left:auto;
-                margin-right:auto;
-                text-align: center; 
-                color: white; font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
-            }
-            body {
-                display:block;
-                margin-left:auto;
-                margin-right:auto;
-                background-color: rgb(27, 29, 31)
-            }
-            p {
-                text-align: center; color:white;
-                font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif}
-            img {
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-            }
-        </style>
-    </head>
-    <body>
-        <script src="main.js">
-        </script>
-        <h1>
-            Battle of the Bros
-        </h1>
-        <p> A real challenge of who is the better gamer! Invite a friend and compete in as many mingames as you submit: we choose the order and display the score, you just worry about winning!</p>
-
-        <a href="https://github.com/average4136/Battle-of-the-Bros-menu"; style="color:lightpurple">
-            <img src="icon.png"; class="center">
-        </a>
-        <p style="color:white">
-            Welcome to Battle of the Bros!
-        </p>
-        <script src="main.js">
-        </script>
-    </body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Empty icon: stops the browser requesting /favicon.ico (a 404). Real icon comes with the UI design. -->
+    <link rel="icon" href="data:," />
+    <title>Battle of the Bros</title>
+  </head>
+  <body>
+    <main>
+      <h1>Battle of the Bros</h1>
+      <p>Organize a minigame competition with your friends: pick games, randomize the order, set handicaps and keep score. You play the games themselves wherever you like.</p>
+      <!-- Filled in by /src/pages/home.ts -->
+      <div id="app"></div>
+      <h2>Go to</h2>
+      <ul>
+        <li><a href="/pages/login.html">Sign up / Log in</a></li>
+        <li><a href="/pages/profile.html">Your profile</a></li>
+        <li><a href="/pages/friends.html">Friends / Leaderboard</a></li>
+        <li><a href="/pages/games.html">Game list</a></li>
+      </ul>
+    </main>
+    <!-- type="module" lets the script use import/export; Vite resolves the .ts file. -->
+    <script type="module" src="/src/pages/home.ts"></script>
+  </body>
 </html>
