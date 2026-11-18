@@ -5,7 +5,7 @@
 // when the backend arrives the same logic can move into a Lambda function
 // almost unchanged (the server should be the one deciding results).
 
-import type { Game, GameId, Round, Room, Session, SessionFormat, UserId } from './types';
+import { PLAYERS_PER_SESSION, type Game, type GameId, type Round, type Room, type Session, type SessionFormat, type UserId } from './types';
 
 /**
  * Fisher–Yates shuffle: walk backwards, swap each item with a random earlier
@@ -19,6 +19,15 @@ export function shuffle<T>(items: readonly T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+/**
+ * v1 rule: a session starts only with exactly PLAYERS_PER_SESSION (2) players.
+ * Pages call this to decide whether to offer "start"; it lives here, with the
+ * other rules, so there's one place to change when more players are allowed.
+ */
+export function hasRightPlayerCount(playerIds: readonly UserId[]): boolean {
+  return playerIds.length === PLAYERS_PER_SESSION;
 }
 
 /**
@@ -78,7 +87,7 @@ export function winsNeeded(format: SessionFormat): number {
  * Finish the session if it's decided. Best-of ends early once someone
  * reaches a majority. Otherwise it ends when the queue runs out, and the
  * most wins takes it. A tie for most wins leaves winnerId unset.
- * (Tie-breaks, 3–4 player scoring and "fastest-total" are all OPEN.)
+ * (Tie-breaks and "fastest-total" are OPEN.)
  */
 function finishIfDecided(session: Session): void {
   const tally = scores(session);

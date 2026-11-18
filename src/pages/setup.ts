@@ -2,6 +2,7 @@ import { appRoot, h, mount, openNote } from '../dom';
 import { renderChrome } from '../page-chrome';
 import { hostRoom } from '../room';
 import { goTo, PAGES } from '../routes';
+import { hasRightPlayerCount } from '../session';
 import { createSession, shuffle } from '../session';
 import { allGames, ensureLoggedIn, gameById, loadState, saveState } from '../state';
 import type { GameId, SessionFormat } from '../types';
@@ -72,6 +73,10 @@ const continueButton = h('button', {
   onclick: () => {
     const count = Number(countInput.value);
     const selected = selectedIds();
+    if (!hasRightPlayerCount(room.playerIds)) {
+      message.textContent = 'A session needs exactly 2 players. Go back to the lobby.';
+      return;
+    }
     if (!Number.isInteger(count) || count < 1) {
       message.textContent = 'Number of games must be at least 1.';
       return;

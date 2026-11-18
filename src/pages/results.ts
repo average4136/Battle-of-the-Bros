@@ -25,9 +25,7 @@ if (!session || session.status !== 'finished') {
     h('h2', {}, 'Handicaps used'),
     s.handicaps.length ? h('ul', {}, ...s.handicaps.map((hc) => h('li', {}, hc.description))) : h('p', {}, 'None.'),
     h('h2', {}, 'Records'),
-    s.playerIds.length === 2
-      ? h('p', {}, 'Head-to-head record and win streaks updated. ', h('a', { href: PAGES.friends }, 'See Friends / Leaderboard'))
-      : openNote('how do records and leaderboards count a 3–4 player session? Not recorded for now.'),
+    h('p', {}, 'Head-to-head record and leaderboard updated. ', h('a', { href: PAGES.friends }, 'See Friends / Leaderboard')),
     openNote('should we ask "did the handicaps feel fair?" here to tune future suggestions?'),
     h('h2', {}, 'What next?'),
     h('p', {}, h('button', {

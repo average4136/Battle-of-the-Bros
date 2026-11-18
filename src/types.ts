@@ -128,18 +128,27 @@ export type Handicap =
 // 4. Rooms (who is here)
 // -----------------------------------------------------------------------------
 
-export const MAX_PLAYERS_PER_ROOM = 4;
+/**
+ * v1 is 1v1 only: a session needs exactly this many players.
+ * The data model below still uses arrays (playerIds: UserId[]) rather than
+ * fixed "player1/player2" fields, so supporting more players later means
+ * changing this number and the rules in session.ts, not every type.
+ */
+export const PLAYERS_PER_SESSION = 2;
+
+/** A room holds exactly the players for one session, so the caps match. */
+export const MAX_PLAYERS_PER_ROOM = PLAYERS_PER_SESSION;
 
 /**
  * An online room friends join with a short code. A room outlives a single
- * session: the same group can play several sessions in a row.
+ * session: the same pair can play several sessions in a row.
  */
 export interface Room {
   code: RoomCode;
   hostId: UserId;
   /** 1 to MAX_PLAYERS_PER_ROOM players. */
   playerIds: UserId[];
-  /** Spectators watch but don't play. No spectator screen yet. */
+  /** Not used in v1 (no spectators). Kept so adding them later doesn't change the shape. */
   spectatorIds: UserId[];
 }
 
