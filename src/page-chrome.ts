@@ -19,8 +19,11 @@ export function renderChrome(): void {
       ? h('button', {
           type: 'button',
           onclick: () => {
-            state.currentUserId = undefined;
-            saveState(state);
+            // Re-load instead of saving `state`: the page may have saved
+            // changes since it was loaded, and the old copy would undo them.
+            const fresh = loadState();
+            fresh.currentUserId = undefined;
+            saveState(fresh);
             goTo('home');
           },
         }, 'Log out')

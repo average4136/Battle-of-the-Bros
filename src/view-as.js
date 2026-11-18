@@ -19,7 +19,7 @@
 // =============================================================================
 
 import { h } from './dom';
-import { saveState, usernameOf } from './state';
+import { loadState, saveState, usernameOf } from './state';
 
 /**
  * Build the "View as" control: one button per room member.
@@ -49,8 +49,12 @@ export function viewAsControl(state) {
     const button = h('button', {
       type: 'button',
       onclick: () => {
-        state.currentUserId = id;
-        saveState(state);
+        // Load the state again rather than saving `state`: this page may have
+        // saved changes since `state` was loaded, and saving the old copy
+        // would undo them.
+        const fresh = loadState();
+        fresh.currentUserId = id;
+        saveState(fresh);
         // Reload so the page script runs again as the new player.
         location.reload();
       },
