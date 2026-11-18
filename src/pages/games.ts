@@ -84,5 +84,5 @@ mount(root,
   h('h2', {}, 'Add a custom game'),
   message,
   form,
-  h('p', {}, h('a', { href: PAGES.setup }, 'Use these in a session →')),
+  h('p', {}, h('a', { href: PAGES.options }, 'Use these in a session →')),
 );

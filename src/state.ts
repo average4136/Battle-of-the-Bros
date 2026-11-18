@@ -41,7 +41,8 @@ export interface PrototypeState {
 
 // Bump the version suffix whenever PrototypeState changes shape, so old saved
 // data from an earlier build is ignored instead of crashing the page.
-const STORAGE_KEY = 'botb-prototype-v1';
+// v2 (2026-11-18): Session gained selectedGameIds and bestOf3GameIds.
+const STORAGE_KEY = 'botb-prototype-v2';
 
 function freshState(): PrototypeState {
   // structuredClone stops edits to the state from changing the sample constants.

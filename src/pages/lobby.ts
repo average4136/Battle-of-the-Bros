@@ -45,7 +45,7 @@ mount(root,
   h('h2', {}, 'Ready?'),
   !hasRightPlayerCount(room.playerIds)
     ? h('p', {}, 'You need exactly 2 players to start (v1 is 1v1 only).')
-    : h('p', {}, h('a', { href: PAGES.setup }, 'Set up the session →')),
+    : h('p', {}, h('a', { href: PAGES.options }, 'Session options →')),
   h('p', {}, h('button', {
     type: 'button',
     onclick: () => {

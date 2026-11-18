@@ -12,12 +12,12 @@ const root = appRoot();
 const session = state.session;
 
 if (!session || session.status === 'setup') {
-  mount(root, h('p', {}, 'No session in progress. ', h('a', { href: PAGES.setup }, 'Go to Session setup')));
+  mount(root, h('p', {}, 'No session in progress. ', h('a', { href: PAGES.options }, 'Go to Session options')));
 } else if (session.status === 'finished') {
   mount(root, h('p', {}, 'This session is over. ', h('a', { href: PAGES.results }, 'See results')));
 } else {
   const s = session;
-  // Normally Handicap setup or Between rounds has already started the round; this covers a direct visit.
+  // Normally Session options ("Start") or Between rounds has already started the round; this covers a direct visit.
   const round = startNextRound(s);
   saveState(state);
 
@@ -29,20 +29,18 @@ if (!session || session.status === 'setup') {
     const message = h('p', { role: 'status' });
 
     // ---- Report a winner -------------------------------------------------------
-    const bestOf3Box = h('input', { type: 'checkbox', checked: round.bestOf3 });
     const winnerRadios = s.playerIds.map((id) => h('input', { type: 'radio', name: 'winner', value: id, required: true }));
     const reportForm = h('form', {
       onsubmit: (e: Event) => {
         e.preventDefault();
         const winner = winnerRadios.find((r) => r.checked)?.value;
         if (!winner) return;
-        reportWin(s, winner, user.id, bestOf3Box.checked);
+        reportWin(s, winner, user.id);
         if (s.status === 'finished') recordFinishedSession(state, s);
         saveState(state);
         goTo(s.status === 'finished' ? 'results' : 'between');
       },
     },
-      h('p', {}, h('label', {}, bestOf3Box, ' We played this game as a best-of-3 (optional; report the overall winner)')),
       h('p', {}, 'Who won?'),
       ...s.playerIds.map((id, i) => h('p', {}, h('label', {}, winnerRadios[i], ' ', usernameOf(state, id)))),
       s.format.kind === 'fastest-total'
@@ -72,6 +70,7 @@ if (!session || session.status === 'setup') {
       game?.url
         ? h('p', {}, h('a', { href: game.url, target: '_blank', rel: 'noopener noreferrer' }, `Open ${game.name} in a new tab ↗`))
         : h('p', {}, 'No link for this game. Play it however you agreed.'),
+      round.bestOf3 ? h('p', {}, h('strong', {}, 'Play this game as a best-of-3'), ' (chosen in Session options), then report the overall winner.') : null,
       game?.isDaily ? h('p', {}, 'Daily game: it can only be played once a day, so a tie means substituting another game.') : null,
       h('h3', {}, 'Handicaps this round'),
       handicaps.length

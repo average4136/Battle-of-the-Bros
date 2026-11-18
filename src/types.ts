@@ -157,9 +157,12 @@ export interface Room {
 // -----------------------------------------------------------------------------
 
 /**
- * How a session is won. The players choose this in Session setup.
- *  - best-of: first to win a majority of `gameCount` games.
- *  - fastest-total: OPEN. The rules aren't decided; see the notes doc.
+ * How a session is won. The host chooses this on the Session options screen.
+ *  - best-of: first to win a majority of `gameCount` games; ends early once
+ *    someone has it (best of 3 ends at 2 wins).
+ *  - fastest-total: "coming later". Shown on the options screen but can't be
+ *    selected yet; the rules aren't decided. Kept in the type so adding it
+ *    later doesn't change the shape of saved data.
  */
 export interface SessionFormat {
   kind: 'best-of' | 'fastest-total';
@@ -191,7 +194,11 @@ export interface Round {
   /** Position in play order, starting at 1. Scratched rounds keep their number. */
   number: number;
   gameId: GameId;
-  /** Players can agree to play this game as a best-of-3. Optional. */
+  /**
+   * Played as a best-of-3 (copied from Session.bestOf3GameIds when the round
+   * starts). Just a label: players report the overall winner, and the site
+   * doesn't track the three sub-games.
+   */
   bestOf3: boolean;
   /** Undefined while the round is in progress. */
   outcome?: RoundOutcome;
@@ -203,17 +210,31 @@ export type SessionStatus = 'setup' | 'in-progress' | 'finished';
 /**
  * One competition: a format, a randomized queue of games, handicaps, and
  * the rounds played so far.
+ *
+ * While status is 'setup', the host edits the options below on the Session
+ * options screen (the other player sees them read-only). Once the session
+ * starts, the options are locked.
  */
 export interface Session {
   id: SessionId;
   roomCode: RoomCode;
   playerIds: UserId[];
+
+  // ---- Options (decided on the Session options screen) ----
   format: SessionFormat;
-  /** Games still to be played, in order. The front is the next game. */
+  /** Games the host ticked, in game-list order. The play order is decided by randomizing. */
+  selectedGameIds: GameId[];
+  /** Selected games to be played as a best-of-3 within the game. */
+  bestOf3GameIds: GameId[];
+  handicaps: Handicap[];
+
+  // ---- Play order (filled in by "Randomize", or automatically at start) ----
+  /** Games still to be played, in order. The front is the next game. Empty in setup = not randomized yet. */
   upcomingGameIds: GameId[];
   /** Selected games not in the queue. Ties draw substitutes from here. */
   substitutePoolIds: GameId[];
-  handicaps: Handicap[];
+
+  // ---- Play ----
   /** Rounds played so far, including scratched ones, in order. */
   rounds: Round[];
   status: SessionStatus;

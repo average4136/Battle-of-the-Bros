@@ -30,23 +30,87 @@ export function hasRightPlayerCount(playerIds: readonly UserId[]): boolean {
   return playerIds.length === PLAYERS_PER_SESSION;
 }
 
+// ---- Setup: the Session options screen ---------------------------------------
+
 /**
- * Build a session from an already-ordered list of selected games. The first
- * `format.gameCount` are queued; the rest become the pool ties draw from.
+ * A new session in 'setup' status with default options: best of 3, every
+ * game selected, no handicaps. If `previous` is given (from "Play again"),
+ * its options are copied instead, so a rematch starts with the same settings.
+ * The play order is never copied: it gets randomized again.
  */
-export function createSession(room: Room, format: SessionFormat, orderedGameIds: GameId[]): Session {
+export function createSession(room: Room, allGameIds: GameId[], previous?: Session): Session {
   return {
     id: `s-${Date.now()}`,
     roomCode: room.code,
     playerIds: [...room.playerIds],
-    format,
-    upcomingGameIds: orderedGameIds.slice(0, format.gameCount),
-    substitutePoolIds: orderedGameIds.slice(format.gameCount),
-    handicaps: [],
+    format: previous ? { ...previous.format } : { kind: 'best-of', gameCount: 3 },
+    // Only keep previously selected games that still exist (a custom game may have been removed).
+    selectedGameIds: previous ? previous.selectedGameIds.filter((id) => allGameIds.includes(id)) : [...allGameIds],
+    bestOf3GameIds: previous ? [...previous.bestOf3GameIds] : [],
+    handicaps: previous ? structuredClone(previous.handicaps) : [],
+    upcomingGameIds: [],
+    substitutePoolIds: [],
     rounds: [],
     status: 'setup',
   };
 }
+
+/** True once the host has pressed Randomize (or the session has started). */
+export function isOrderRandomized(session: Session): boolean {
+  return session.upcomingGameIds.length > 0;
+}
+
+/**
+ * Throw away the randomized order. Called whenever the selection or the
+ * number of games changes, so the preview can never show games that are no
+ * longer selected.
+ */
+export function clearOrder(session: Session): void {
+  session.upcomingGameIds = [];
+  session.substitutePoolIds = [];
+}
+
+/** Shuffle the selected games. The first `gameCount` are queued; the rest become the tie-substitute pool. */
+export function randomizeOrder(session: Session): void {
+  const order = shuffle(session.selectedGameIds);
+  session.upcomingGameIds = order.slice(0, session.format.gameCount);
+  session.substitutePoolIds = order.slice(session.format.gameCount);
+}
+
+/**
+ * Why the session can't start yet, as a message for the screen, or
+ * undefined if it's ready. The page uses this to show the problem and
+ * to disable the Start button.
+ */
+export function startProblem(session: Session): string | undefined {
+  const { gameCount } = session.format;
+  if (!hasRightPlayerCount(session.playerIds)) return 'A session needs exactly 2 players.';
+  if (session.format.kind !== 'best-of') return 'Only "Best of X" is available for now.';
+  if (!Number.isInteger(gameCount) || gameCount < 1) return 'Number of games must be at least 1.';
+  if (session.selectedGameIds.length < gameCount) {
+    return `Number of games is ${gameCount} but only ${session.selectedGameIds.length} game(s) are selected.`;
+  }
+  return undefined;
+}
+
+/**
+ * Lock the options and start round 1. Returns a problem message instead if
+ * the session isn't ready (see startProblem).
+ */
+export function startSession(session: Session): string | undefined {
+  const problem = startProblem(session);
+  if (problem) return problem;
+  // Random order is the default: if nobody pressed Randomize, do it now.
+  if (!isOrderRandomized(session)) randomizeOrder(session);
+  // Drop options that point at games which ended up unselected.
+  const selected = new Set(session.selectedGameIds);
+  session.handicaps = session.handicaps.filter((hc) => selected.has(hc.gameId));
+  session.bestOf3GameIds = session.bestOf3GameIds.filter((id) => selected.has(id));
+  startNextRound(session);
+  return undefined;
+}
+
+// ---- Play ---------------------------------------------------------------------
 
 /** The round being played right now, if any. */
 export function currentRound(session: Session): Round | undefined {
@@ -60,7 +124,7 @@ export function startNextRound(session: Session): Round | undefined {
   if (existing) return existing;
   const gameId = session.upcomingGameIds.shift();
   if (!gameId) return undefined;
-  const round: Round = { number: session.rounds.length + 1, gameId, bestOf3: false };
+  const round: Round = { number: session.rounds.length + 1, gameId, bestOf3: session.bestOf3GameIds.includes(gameId) };
   session.rounds.push(round);
   session.status = 'in-progress';
   return round;
@@ -104,10 +168,9 @@ function finishIfDecided(session: Session): void {
   }
 }
 
-export function reportWin(session: Session, winnerId: UserId, reportedBy: UserId, bestOf3: boolean): void {
+export function reportWin(session: Session, winnerId: UserId, reportedBy: UserId): void {
   const round = currentRound(session);
   if (!round) return;
-  round.bestOf3 = bestOf3;
   round.outcome = { kind: 'win', winnerId, reportedBy };
   round.playedAt = new Date().toISOString();
   finishIfDecided(session);
