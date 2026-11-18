@@ -34,7 +34,7 @@ export function hasRightPlayerCount(playerIds: readonly UserId[]): boolean {
 
 /**
  * A new session in 'setup' status with default options: best of 3, every
- * game selected, no handicaps. If `previous` is given (from "Play again"),
+ * game selected, no handicaps, one report is enough. If `previous` is given (from "Play again"),
  * its options are copied instead, so a rematch starts with the same settings.
  * The play order is never copied: it gets randomized again.
  */
@@ -48,6 +48,7 @@ export function createSession(room: Room, allGameIds: GameId[], previous?: Sessi
     selectedGameIds: previous ? previous.selectedGameIds.filter((id) => allGameIds.includes(id)) : [...allGameIds],
     bestOf3GameIds: previous ? [...previous.bestOf3GameIds] : [],
     handicaps: previous ? structuredClone(previous.handicaps) : [],
+    requireTwoConfirmations: previous?.requireTwoConfirmations ?? false,
     upcomingGameIds: [],
     substitutePoolIds: [],
     rounds: [],
@@ -168,33 +169,112 @@ function finishIfDecided(session: Session): void {
   }
 }
 
+// ---- Reporting results ------------------------------------------------------------
+//
+// Either player can report a result. What happens next depends on the
+// session's "Require two confirmations" option:
+//   - off (default): the report is final straight away.
+//   - on: the report waits on the round as `pendingReport` until the other
+//     player confirms it (then it's final) or rejects it (then it's deleted
+//     and the round can be reported again; placeholder behavior).
+// While a report is pending, no new report can be made for that round.
+
+/** Report that `winnerId` won the current round. Ignored if a report is already pending. */
 export function reportWin(session: Session, winnerId: UserId, reportedBy: UserId): void {
   const round = currentRound(session);
-  if (!round) return;
-  round.outcome = { kind: 'win', winnerId, reportedBy };
+  if (!round || round.pendingReport) return;
+  if (session.requireTwoConfirmations) {
+    round.pendingReport = { kind: 'win', winnerId, reportedBy };
+  } else {
+    finalizeWin(session, round, winnerId, reportedBy);
+  }
+}
+
+/**
+ * Report a tie: the round gets scratched and a different game is played
+ * immediately next (see finalizeTie). Returns false, changing nothing, if
+ * there's no unused game left to substitute, or a report is already pending.
+ */
+export function reportTie(session: Session, allGames: Game[], reportedBy: UserId): boolean {
+  const round = currentRound(session);
+  if (!round || round.pendingReport) return false;
+  const substitute = pickSubstitute(session, allGames);
+  if (!substitute) return false;
+  if (session.requireTwoConfirmations) {
+    // Only check a substitute exists now; the actual one is picked on confirm.
+    round.pendingReport = { kind: 'tie', reportedBy };
+  } else {
+    finalizeTie(session, round, substitute, reportedBy);
+  }
+  return true;
+}
+
+/** Only the player who didn't make the pending report may confirm or reject it. */
+export function canRespondToReport(round: Round, userId: UserId): boolean {
+  return round.pendingReport !== undefined && round.pendingReport.reportedBy !== userId;
+}
+
+/**
+ * The other player confirms the pending report, making it final.
+ * Returns false (nothing changes) if they aren't allowed to, or if a tie
+ * can no longer find a substitute game.
+ */
+export function confirmReport(session: Session, allGames: Game[], confirmerId: UserId): boolean {
+  const round = currentRound(session);
+  if (!round || !canRespondToReport(round, confirmerId)) return false;
+  const pending = round.pendingReport!;
+  if (pending.kind === 'win') {
+    round.pendingReport = undefined;
+    finalizeWin(session, round, pending.winnerId, pending.reportedBy, confirmerId);
+    return true;
+  }
+  const substitute = pickSubstitute(session, allGames);
+  if (!substitute) return false;
+  round.pendingReport = undefined;
+  finalizeTie(session, round, substitute, pending.reportedBy, confirmerId);
+  return true;
+}
+
+/**
+ * PLACEHOLDER BEHAVIOR (open question): the other player rejects the pending
+ * report. It's simply deleted, so either player can report the round again.
+ * Nothing records that a rejection happened.
+ */
+export function rejectReport(session: Session, rejecterId: UserId): void {
+  const round = currentRound(session);
+  if (!round || !canRespondToReport(round, rejecterId)) return;
+  round.pendingReport = undefined;
+}
+
+// ---- Making a result final (used by the functions above) ---------------------------
+
+function finalizeWin(session: Session, round: Round, winnerId: UserId, reportedBy: UserId, confirmedBy?: UserId): void {
+  round.outcome = { kind: 'win', winnerId, reportedBy, confirmedBy };
   round.playedAt = new Date().toISOString();
   finishIfDecided(session);
 }
 
 /**
- * Tie: scratch the round and put a different game at the front of the queue.
- * Replaying the same game isn't an option because daily games (Wordle) can't
- * be replayed. The substitute comes from the pool first, then from any game
- * not yet used this session. Returns the substitute, or undefined if none is left.
+ * Tie: scratch the round and put a different game at the front of the queue,
+ * so it's played immediately next. Replaying the same game isn't an option
+ * because daily games (Wordle) can't be replayed. A scratched round doesn't
+ * count toward X.
  */
-export function scratchTie(session: Session, allGames: Game[]): GameId | undefined {
-  const round = currentRound(session);
-  if (!round) return undefined;
+function finalizeTie(session: Session, round: Round, substitute: GameId, reportedBy: UserId, confirmedBy?: UserId): void {
+  session.substitutePoolIds = session.substitutePoolIds.filter((id) => id !== substitute);
+  session.upcomingGameIds.unshift(substitute);
+  round.outcome = { kind: 'tie-scratched', substituteGameId: substitute, reportedBy, confirmedBy };
+  round.playedAt = new Date().toISOString();
+}
 
+/**
+ * Choose a substitute game for a tie, without changing anything. It comes
+ * from the session's substitute pool first, then from any game not yet used
+ * this session. Undefined if there's none left.
+ */
+function pickSubstitute(session: Session, allGames: Game[]): GameId | undefined {
   const used = new Set([...session.rounds.map((r) => r.gameId), ...session.upcomingGameIds]);
   const fromPool = session.substitutePoolIds.filter((id) => !used.has(id));
   const fromAll = allGames.map((g) => g.id).filter((id) => !used.has(id));
-  const substitute = shuffle(fromPool)[0] ?? shuffle(fromAll)[0];
-  if (!substitute) return undefined;
-
-  session.substitutePoolIds = session.substitutePoolIds.filter((id) => id !== substitute);
-  session.upcomingGameIds.unshift(substitute);
-  round.outcome = { kind: 'tie-scratched', substituteGameId: substitute };
-  round.playedAt = new Date().toISOString();
-  return substitute;
+  return shuffle(fromPool)[0] ?? shuffle(fromAll)[0];
 }

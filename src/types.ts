@@ -170,15 +170,16 @@ export interface SessionFormat {
 }
 
 /**
- * What happened in one round. A union because a tie isn't "a result with no
- * winner". It has its own consequence: the round is thrown out and replaced.
+ * What happened in one round, once it's final. A union because a tie isn't
+ * "a result with no winner". It has its own consequence: the round is thrown
+ * out and replaced.
  */
 export type RoundOutcome =
   | {
       kind: 'win';
       winnerId: UserId;
       reportedBy: UserId;
-      /** OPEN: does an opponent need to confirm a reported result? */
+      /** Set only when the session requires two confirmations: who confirmed it. */
       confirmedBy?: UserId;
       /** Unused until "fastest-total" (coming later) is designed. */
       timeSeconds?: number;
@@ -187,7 +188,20 @@ export type RoundOutcome =
       kind: 'tie-scratched';
       /** The game swapped in to replace this round. */
       substituteGameId: GameId;
+      reportedBy: UserId;
+      /** Set only when the session requires two confirmations: who confirmed it. */
+      confirmedBy?: UserId;
     };
+
+/**
+ * A result one player has reported that the other hasn't confirmed yet.
+ * Only used when the session's `requireTwoConfirmations` option is on. It
+ * becomes the round's `outcome` once confirmed. If rejected, it's simply
+ * deleted so the round can be reported again (placeholder behavior).
+ */
+export type PendingReport =
+  | { kind: 'win'; winnerId: UserId; reportedBy: UserId }
+  | { kind: 'tie'; reportedBy: UserId };
 
 /** One game played (or scratched) within a session. */
 export interface Round {
@@ -200,7 +214,9 @@ export interface Round {
    * doesn't track the three sub-games.
    */
   bestOf3: boolean;
-  /** Undefined while the round is in progress. */
+  /** A reported result waiting for the other player's confirmation. */
+  pendingReport?: PendingReport;
+  /** Undefined while the round is in progress (including while a report is pending). */
   outcome?: RoundOutcome;
   playedAt?: Timestamp;
 }
@@ -227,6 +243,11 @@ export interface Session {
   /** Selected games to be played as a best-of-3 within the game. */
   bestOf3GameIds: GameId[];
   handicaps: Handicap[];
+  /**
+   * Off (default): one player's report is final. On: a report is pending
+   * until the other player confirms it (or rejects it).
+   */
+  requireTwoConfirmations: boolean;
 
   // ---- Play order (filled in by "Randomize", or automatically at start) ----
   /** Games still to be played, in order. The front is the next game. Empty in setup = not randomized yet. */

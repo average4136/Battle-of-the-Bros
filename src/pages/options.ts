@@ -77,6 +77,7 @@ function render(s: Session): void {
     gamesSection(s, readOnly),
     orderSection(s, readOnly),
     handicapsSection(s, readOnly),
+    reportingSection(s, readOnly),
     startSection(s),
   );
 }
@@ -291,6 +292,22 @@ function customHandicapForm(s: Session): HTMLElement {
     h('label', {}, 'Player: ', playerSelect), ' ',
     h('label', {}, 'Handicap: ', descInput), ' ',
     h('button', { type: 'submit' }, 'Add custom handicap'),
+  );
+}
+
+// ---- Result reporting -------------------------------------------------------------
+
+function reportingSection(s: Session, readOnly: boolean): HTMLElement {
+  const box = h('input', {
+    type: 'checkbox', checked: s.requireTwoConfirmations, disabled: readOnly,
+    onchange: () => update(s, () => { s.requireTwoConfirmations = !s.requireTwoConfirmations; }),
+  });
+  return h('section', {},
+    h('h2', {}, 'Result reporting'),
+    h('p', {}, h('label', {}, box, ' Require two confirmations')),
+    h('p', {}, s.requireTwoConfirmations
+      ? 'On: when one player reports a result, it waits until the other player confirms it. The other player can also reject it, which clears the report so it can be reported again.'
+      : 'Off (default): one player reporting a result is enough.'),
   );
 }
 
