@@ -5,6 +5,7 @@
 import { h } from './dom';
 import { PAGE_LABELS, PAGES, goTo, type PageName } from './routes';
 import { currentUser, loadState, resetState, saveState } from './state';
+import { viewAsControl } from './view-as.js'; // view-as: prototype only, delete with src/view-as.js
 
 export function renderChrome(): void {
   const state = loadState();
@@ -40,6 +41,9 @@ export function renderChrome(): void {
 
   document.body.append(
     h('hr'),
-    h('footer', {}, h('p', {}, 'Prototype site map:'), h('ul', {}, ...links), reset),
+    h('footer', {},
+      h('p', {}, 'Prototype site map:'), h('ul', {}, ...links), reset,
+      viewAsControl(state), // view-as: prototype only, delete with src/view-as.js
+    ),
   );
 }

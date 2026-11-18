@@ -14,6 +14,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": true,
+    // Let TypeScript files import plain .js files (e.g. src/view-as.js).
+    // checkJs stays off (the default), so the .js files themselves aren't
+    // type-checked; TypeScript only reads their JSDoc comments for types.
+    "allowJs": true,
     "skipLibCheck": true
   },
   "include": ["src"]
