@@ -1,6 +1,10 @@
 # Foundation notes: pre-GUI clickable prototype
 
 Branch: `foundation-scaffold` · Written 2026-11-16 while you were in class.
+**Updated 2026-11-18** (branch `session-options-update`) to match your
+decisions after reviewing it. What changed and why is in
+[`UPDATE_2026-11-18.md`](UPDATE_2026-11-18.md). Answered questions below are
+marked **✅ Answered**.
 
 This is a plain, unstyled multi-page site you can click through on localhost.
 It uses hardcoded sample data, has no backend and makes no network calls.
@@ -27,12 +31,17 @@ Other commands:
 | `npm run check-links` | After a build: check every internal link points at a real page |
 
 **Suggested click-through:** Home → Sign up / Log in → "log in as sample user alex"
-→ Host a new room → Set up the session → Randomize → Continue → tick a
-handicap → Start → play a few rounds (try the Tie button) → Results →
-Friends / Leaderboard (your record against sam has gone up).
+→ Host a new room → Session options → pick games, tick a best-of-3 and a
+handicap → Randomize → switch **View as** to the other player to see the
+read-only screen → switch back → Start → play a few rounds (try the Tie
+button) → Results → Friends / Leaderboard (your record against sam has gone
+up). Then "Play again", tick **Require two confirmations**, and report
+results as one player and confirm them as the other. The full version is in
+`UPDATE_2026-11-18.md`, "How to try it".
 
-Every page has a **site map** at the bottom so you can jump anywhere, plus a
-**Reset prototype data** button that clears saved state.
+Every page has a **site map** at the bottom so you can jump anywhere, a
+**Reset prototype data** button that clears saved state, and a
+**PROTOTYPE ONLY: View as** switch for being the host or the other player.
 
 ---
 
@@ -73,14 +82,14 @@ folder outside the repo**. It's not a project dependency (see §6, "Later").
 index.html              Home page (Vite requires the entry page at the root)
 pages/
   login.html            Sign up / Log in (fake)
-  lobby.html            Room code, players, music + chat placeholders
-  setup.html            Format, number of games, game selection, randomize
-  handicaps.html        Player stats, suggested + custom handicaps
-  round.html            Current game, link out, report winner, tie → substitute
+  lobby.html            Room code, the 2 players, music + chat placeholders
+  options.html          Session options: format, games, order, best-of-3s,
+                        handicaps, confirmations. Host edits, other player read-only
+  round.html            Current game, link out, report / confirm / reject, tie → substitute
   between.html          Score, last result, next game
   results.html          Winner, history, records, play again
   profile.html          Self-reported stats (Elo, WPM, per-game ratings)
-  friends.html          Head-to-head records, win-streak leaderboard, chat placeholder
+  friends.html          Head-to-head records, total-wins leaderboard, chat placeholder
   games.html            Curated list + add/remove custom games
 src/
   types.ts              ★ The whole data model in one file (UML-ready)
@@ -91,13 +100,15 @@ src/
   routes.ts             List of every page URL; goTo() for navigating from code
   dom.ts                h() element builder, mount(), [OPEN]/[Placeholder] notes
   page-chrome.ts        "Logged in as" bar + prototype site map on every page
+  view-as.js            PROTOTYPE ONLY "View as" switch (plain JS; delete with the backend)
   score-view.ts         Score table / round history shared by 3 pages
   pages/*.ts            One script per page; builds that page's content
 scripts/check-links.mjs Offline dead-link checker for the build
 vite.config.ts          Tells Vite to build every pages/*.html (auto-discovered)
-tsconfig.json           Strict TypeScript settings, type-check only
+tsconfig.json           Strict TypeScript settings, type-check only (allowJs: TS may import .js)
 legacy/                 Your original index.html, main.js, icon.png (moved, not deleted)
 docs/FOUNDATION_NOTES.md  This file
+docs/UPDATE_2026-11-18.md What changed in the session-options update
 ```
 
 **Moved, not deleted:** your original `index.html`, `main.js` and `icon.png`
@@ -113,6 +124,13 @@ appended a "Development" section to `README.md` and left the rest as you wrote i
 
 ### How I verified it
 
+**2026-11-18 update:** typecheck, build and check-links pass (75 links, 0
+broken). A 64-check headless Chrome click-through as both host and other
+player passed against the dev server and the production build, with no
+console errors. Details in `UPDATE_2026-11-18.md`.
+
+Original 2026-11-16 verification:
+
 - `npm run typecheck`: no errors.
 - `npm run build`: succeeds, producing 11 HTML pages + JS in `dist/`.
 - `npm run check-links`: 83 links checked, 0 broken (static hrefs + every route).
@@ -124,7 +142,7 @@ appended a "Development" section to `README.md` and left the rest as you wrote i
   and substitutes; reporting wins until a best-of-3 finishes; the
   head-to-head record updates (8–5); profile edits survive reload;
   `javascript:` links rejected for custom games; HTML in a game name shows
-  as text; the lobby caps at 4. **No console errors.**
+  as text; the lobby caps at 4 (now 2). **No console errors.**
 
 **Not verified:** external game URLs (the checker is offline on purpose;
 please click them yourself), Firefox (Chrome only), phone-width layout,
@@ -170,7 +188,7 @@ implicit globals (`games = ...` without `let`/`const`); modules forbid that.
 **How state carries between pages.** Each link click loads a fresh page, so
 every JS variable is lost. `localStorage` is a per-site key/value store in
 the browser that survives reloads. `state.ts` stores one JSON object
-under `botb-prototype-v1`. Each page calls `loadState()` on start, changes
+under `botb-prototype-v2` (was `-v1` before the 2026-11-18 update). Each page calls `loadState()` on start, changes
 it, and calls `saveState()` before navigating. Inspect it in the browser
 devtools: Application (Chrome) or Storage (Firefox) → Local Storage.
 
@@ -203,15 +221,15 @@ problem.
 
 Each appears on the relevant page as a bold **[OPEN: …]** note.
 
-1. **Does one player's reported result need the other's confirmation?**
-   Currently whoever reports decides (`RoundOutcome.confirmedBy` exists but is
-   unused). *Round page.*
-2. **How does "fastest completion of X games" work?** Same games, total time,
-   live race? You can select it, but it plays like best-of without the early
-   finish, and `timeSeconds` is unused. *Setup and Round pages.*
-3. **How do 2v2 and 3–4 player sessions work?** Handicaps and scoring?
-   Currently: one winner per game, most wins takes it, and the session isn't
-   recorded in head-to-head or leaderboard stats. *Lobby and Results pages.*
+1. ✅ **Answered: does a reported result need confirmation?** One report is
+   enough by default. The session option **"Require two confirmations"** makes
+   a report pending until the other player confirms or rejects it. *(Still
+   open: what rejecting should really do. See the update doc.)*
+2. **How does "fastest completion of X games" work?** *Partly answered:*
+   deferred to later. It's shown on Session options greyed out as "coming
+   later" and can't be selected. The rules are still open.
+3. ✅ **Answered: 2v2 and 3–4 players.** Not in v1. A session needs exactly 2
+   players. The data model keeps `playerIds` arrays for later.
 4. **Record "did that handicap feel fair?" after rounds?** Not built.
    *Results page.*
 5. **Real-time backend design** (WebSockets, polling, something else). Nothing
@@ -219,13 +237,11 @@ Each appears on the relevant page as a bold **[OPEN: …]** note.
 
 ### New questions that came up
 
-6. **A tied session** (equal wins when games run out, e.g. 1–1 after a
-   scratch with no substitutes, or in 3–4 player games): sudden-death game,
-   or leave it a tie? Currently shows "It's a tie!" with an OPEN note.
+6. ✅ **Answered: a tied session stays a tie.** No sudden-death game.
 7. **Custom game visibility:** private to the creator, shared with friends,
    or public? (In the prototype they're stored locally, so visible only to you.)
-8. **Who can configure a session:** host only, or anyone in the room?
-   Currently anyone.
+8. ✅ **Answered: only the host configures a session.** The other player sees
+   Session options read-only.
 9. **The curated game list** in `src/sample-data.ts` is my guess. Please
    review it. Note that NYT games may hit a paywall, and GeoGuessr needs an
    account/subscription.
@@ -237,19 +253,19 @@ Each appears on the relevant page as a bold **[OPEN: …]** note.
 
 | # | Assumption | Where |
 |---|---|---|
-| A1 | **Best of X = first to a majority** (2 of 3, 3 of 5) and ends early. | `session.ts` `winsNeeded` |
-| A2 | **Ties don't count toward X**: a scratched round is replaced, so X decisive games are still possible. | `scratchTie` |
-| A3 | **Tie substitute** comes from selected-but-unqueued games first, then any unused game, and is played **immediately next**. | `scratchTie` |
-| A4 | **Best-of-3 within a game** is just a checkbox. Players report the overall winner of that game; the site doesn't track the sub-games. | Round page |
-| A5 | Head-to-head counts **sessions won**, not individual games. | `HeadToHeadRecord` |
-| A6 | The leaderboard ranks by **current win streak**, then best streak. | Friends page |
+| A1 | ✅ **Confirmed.** Best of X = first to a majority (2 of 3, 3 of 5) and ends early. | `session.ts` `winsNeeded` |
+| A2 | ✅ **Confirmed.** Ties don't count toward X: a scratched round is replaced. | `finalizeTie` |
+| A3 | ✅ **Confirmed** (played immediately next). The substitute comes from selected-but-unqueued games first, then any unused game. | `pickSubstitute`, `finalizeTie` |
+| A4 | ✅ **Confirmed.** Best-of-3 within a game is just a checkbox (now per game on Session options). Players report the overall winner. | Session options |
+| A5 | ✅ **Confirmed.** Head-to-head counts sessions won, not individual games. | `HeadToHeadRecord` |
+| A6 | ✅ **Reversed.** The leaderboard ranks by **total wins** (tie-break: fewer sessions played). | Friends page |
 | A7 | A handicap's `appliesTo` is the **player being handicapped**. A head start for the weaker player is modeled as a handicap on the stronger one. | `types.ts` |
 | A8 | **Profile stats are separate from Account** (different lifecycles). | `types.ts` |
-| A9 | Spectators **don't count** toward the 4-player cap. | `Room` |
-| A10 | You need **≥ 2 players** to start a session. | Lobby |
+| A9 | ✅ **Moot.** No spectators in v1 (`spectatorIds` kept in the type, unused). | `Room` |
+| A10 | ✅ **Changed.** You need **exactly 2 players** to start. | `hasRightPlayerCount` |
 | A11 | Room codes are **4 characters**, without look-alike characters (0/O, 1/I/L). | `room.ts` |
 | A12 | Log in with **username or email**. Usernames are 3–20 lowercase letters/digits/underscore. | Login page |
-| A13 | "Play again" **keeps the same room and players** and goes to Session setup. | Results page |
+| A13 | ✅ **Confirmed.** "Play again" keeps the same room and players. It goes to Session options (host only) with the previous options carried over. | Results page |
 | A14 | Nothing stops you replaying a daily game in a later session (the site can't know whether you've played today's Wordle). | — |
 | A15 | Self-reported skill uses your three levels **plus "no opinion"** (the default). | Profile page |
 
@@ -277,16 +293,12 @@ These were skipped because they're your call or not safe to do unattended:
 
 ### Do soon (cheap, high value, no new scope)
 
-- **Answer the open questions before building more.** Questions 1–3 and 6
-  change `types.ts` and `session.ts`. Everything else can wait.
-- **Consider a smaller v1: 1v1 and best-of only.** 3–4 players, 2v2 and
-  "fastest completion" each multiply the rules (scoring, handicaps, records).
-  The data model already supports up to 4 `playerIds`, so leaving them for
-  later doesn't paint you into a corner.
-- **Consider "anyone can undo the last result" instead of confirmation.**
-  Among friends, a visible "undo last round" button is much simpler than a
-  confirm/dispute flow and fits "player-officiated". *(Suggestion only; this
-  is open question 1.)*
+- ~~**Answer the open questions before building more.**~~ Done 2026-11-18,
+  except the rejection behavior and "fastest completion".
+- ~~**Consider a smaller v1: 1v1 and best-of only.**~~ Done: v1 is 1v1, and
+  "fastest completion" is "coming later".
+- ~~**Consider "anyone can undo the last result"**~~ You chose an optional
+  two-confirmations setting instead.
 - **A single-device mode is nearly free.** This prototype is already a
   working scorekeeper on one screen. Styled, it's usable at a real game night
   before any backend exists, and you'd get real feedback on the flow early.
@@ -348,8 +360,7 @@ These were skipped because they're your call or not safe to do unattended:
 
 ## 7. Suggested next steps
 
-1. Click through the prototype (§1) and note anything that feels wrong in the flow.
-2. Answer the open questions and assumptions in §4. I can update the model and rules next session.
-3. Decide the v1 scope cut (1v1 best-of only?).
-4. Start your UI design pass: one shared stylesheet over these pages.
-5. Then: unit tests for `session.ts`, and pick the real-time approach before any backend work.
+1. ~~Click through the prototype~~, ~~answer the open questions~~ and ~~decide the v1 scope cut~~: done 2026-11-18.
+2. Review the `session-options-update` branch and answer the questions in `UPDATE_2026-11-18.md`.
+3. Start your UI design pass: one shared stylesheet over these pages.
+4. Then: unit tests for `session.ts`, and pick the real-time approach before any backend work.

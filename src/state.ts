@@ -41,7 +41,9 @@ export interface PrototypeState {
 
 // Bump the version suffix whenever PrototypeState changes shape, so old saved
 // data from an earlier build is ignored instead of crashing the page.
-const STORAGE_KEY = 'botb-prototype-v1';
+// v2 (2026-11-18): Session gained selectedGameIds, bestOf3GameIds and
+// requireTwoConfirmations; Round gained pendingReport.
+const STORAGE_KEY = 'botb-prototype-v2';
 
 function freshState(): PrototypeState {
   // structuredClone stops edits to the state from changing the sample constants.
@@ -106,9 +108,11 @@ export function ensureLoggedIn(state: PrototypeState): Account {
 
 /**
  * Update the head-to-head record and leaderboard once a session finishes.
- * Only 1v1 is recorded: how records work with 3–4 players is an open question.
+ * A tied session (no winnerId) counts as played for both, but as a win for nobody.
  */
 export function recordFinishedSession(state: PrototypeState, session: Session): void {
+  // Sessions are always 1v1 in v1 (session.ts enforces it); this guard just
+  // keeps the destructuring below safe if that ever changes.
   if (session.playerIds.length !== 2) return;
   const [p1, p2] = session.playerIds;
   const winner = session.winnerId;

@@ -10,7 +10,7 @@ const root = appRoot();
 const session = state.session;
 
 if (!session || session.status === 'setup') {
-  mount(root, h('p', {}, 'No session in progress. ', h('a', { href: PAGES.setup }, 'Go to Session setup')));
+  mount(root, h('p', {}, 'No session in progress. ', h('a', { href: PAGES.options }, 'Go to Session options')));
 } else if (session.status === 'finished') {
   mount(root, h('p', {}, 'This session is over. ', h('a', { href: PAGES.results }, 'See results')));
 } else {

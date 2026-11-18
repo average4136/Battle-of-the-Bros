@@ -5,6 +5,7 @@
 import { h } from './dom';
 import { PAGE_LABELS, PAGES, goTo, type PageName } from './routes';
 import { currentUser, loadState, resetState, saveState } from './state';
+import { viewAsControl } from './view-as.js'; // view-as: prototype only, delete with src/view-as.js
 
 export function renderChrome(): void {
   const state = loadState();
@@ -18,8 +19,11 @@ export function renderChrome(): void {
       ? h('button', {
           type: 'button',
           onclick: () => {
-            state.currentUserId = undefined;
-            saveState(state);
+            // Re-load instead of saving `state`: the page may have saved
+            // changes since it was loaded, and the old copy would undo them.
+            const fresh = loadState();
+            fresh.currentUserId = undefined;
+            saveState(fresh);
             goTo('home');
           },
         }, 'Log out')
@@ -40,6 +44,9 @@ export function renderChrome(): void {
 
   document.body.append(
     h('hr'),
-    h('footer', {}, h('p', {}, 'Prototype site map:'), h('ul', {}, ...links), reset),
+    h('footer', {},
+      h('p', {}, 'Prototype site map:'), h('ul', {}, ...links), reset,
+      viewAsControl(state), // view-as: prototype only, delete with src/view-as.js
+    ),
   );
 }

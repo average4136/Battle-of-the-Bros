@@ -128,18 +128,27 @@ export type Handicap =
 // 4. Rooms (who is here)
 // -----------------------------------------------------------------------------
 
-export const MAX_PLAYERS_PER_ROOM = 4;
+/**
+ * v1 is 1v1 only: a session needs exactly this many players.
+ * The data model below still uses arrays (playerIds: UserId[]) rather than
+ * fixed "player1/player2" fields, so supporting more players later means
+ * changing this number and the rules in session.ts, not every type.
+ */
+export const PLAYERS_PER_SESSION = 2;
+
+/** A room holds exactly the players for one session, so the caps match. */
+export const MAX_PLAYERS_PER_ROOM = PLAYERS_PER_SESSION;
 
 /**
  * An online room friends join with a short code. A room outlives a single
- * session: the same group can play several sessions in a row.
+ * session: the same pair can play several sessions in a row.
  */
 export interface Room {
   code: RoomCode;
   hostId: UserId;
   /** 1 to MAX_PLAYERS_PER_ROOM players. */
   playerIds: UserId[];
-  /** Spectators watch but don't play. No spectator screen yet. */
+  /** Not used in v1 (no spectators). Kept so adding them later doesn't change the shape. */
   spectatorIds: UserId[];
 }
 
@@ -148,9 +157,12 @@ export interface Room {
 // -----------------------------------------------------------------------------
 
 /**
- * How a session is won. The players choose this in Session setup.
- *  - best-of: first to win a majority of `gameCount` games.
- *  - fastest-total: OPEN. The rules aren't decided; see the notes doc.
+ * How a session is won. The host chooses this on the Session options screen.
+ *  - best-of: first to win a majority of `gameCount` games; ends early once
+ *    someone has it (best of 3 ends at 2 wins).
+ *  - fastest-total: "coming later". Shown on the options screen but can't be
+ *    selected yet; the rules aren't decided. Kept in the type so adding it
+ *    later doesn't change the shape of saved data.
  */
 export interface SessionFormat {
   kind: 'best-of' | 'fastest-total';
@@ -158,33 +170,53 @@ export interface SessionFormat {
 }
 
 /**
- * What happened in one round. A union because a tie isn't "a result with no
- * winner". It has its own consequence: the round is thrown out and replaced.
+ * What happened in one round, once it's final. A union because a tie isn't
+ * "a result with no winner". It has its own consequence: the round is thrown
+ * out and replaced.
  */
 export type RoundOutcome =
   | {
       kind: 'win';
       winnerId: UserId;
       reportedBy: UserId;
-      /** OPEN: does an opponent need to confirm a reported result? */
+      /** Set only when the session requires two confirmations: who confirmed it. */
       confirmedBy?: UserId;
-      /** OPEN: only meaningful once "fastest-total" is defined. */
+      /** Unused until "fastest-total" (coming later) is designed. */
       timeSeconds?: number;
     }
   | {
       kind: 'tie-scratched';
       /** The game swapped in to replace this round. */
       substituteGameId: GameId;
+      reportedBy: UserId;
+      /** Set only when the session requires two confirmations: who confirmed it. */
+      confirmedBy?: UserId;
     };
+
+/**
+ * A result one player has reported that the other hasn't confirmed yet.
+ * Only used when the session's `requireTwoConfirmations` option is on. It
+ * becomes the round's `outcome` once confirmed. If rejected, it's simply
+ * deleted so the round can be reported again (placeholder behavior).
+ */
+export type PendingReport =
+  | { kind: 'win'; winnerId: UserId; reportedBy: UserId }
+  | { kind: 'tie'; reportedBy: UserId };
 
 /** One game played (or scratched) within a session. */
 export interface Round {
   /** Position in play order, starting at 1. Scratched rounds keep their number. */
   number: number;
   gameId: GameId;
-  /** Players can agree to play this game as a best-of-3. Optional. */
+  /**
+   * Played as a best-of-3 (copied from Session.bestOf3GameIds when the round
+   * starts). Just a label: players report the overall winner, and the site
+   * doesn't track the three sub-games.
+   */
   bestOf3: boolean;
-  /** Undefined while the round is in progress. */
+  /** A reported result waiting for the other player's confirmation. */
+  pendingReport?: PendingReport;
+  /** Undefined while the round is in progress (including while a report is pending). */
   outcome?: RoundOutcome;
   playedAt?: Timestamp;
 }
@@ -194,17 +226,36 @@ export type SessionStatus = 'setup' | 'in-progress' | 'finished';
 /**
  * One competition: a format, a randomized queue of games, handicaps, and
  * the rounds played so far.
+ *
+ * While status is 'setup', the host edits the options below on the Session
+ * options screen (the other player sees them read-only). Once the session
+ * starts, the options are locked.
  */
 export interface Session {
   id: SessionId;
   roomCode: RoomCode;
   playerIds: UserId[];
+
+  // ---- Options (decided on the Session options screen) ----
   format: SessionFormat;
-  /** Games still to be played, in order. The front is the next game. */
+  /** Games the host ticked, in game-list order. The play order is decided by randomizing. */
+  selectedGameIds: GameId[];
+  /** Selected games to be played as a best-of-3 within the game. */
+  bestOf3GameIds: GameId[];
+  handicaps: Handicap[];
+  /**
+   * Off (default): one player's report is final. On: a report is pending
+   * until the other player confirms it (or rejects it).
+   */
+  requireTwoConfirmations: boolean;
+
+  // ---- Play order (filled in by "Randomize", or automatically at start) ----
+  /** Games still to be played, in order. The front is the next game. Empty in setup = not randomized yet. */
   upcomingGameIds: GameId[];
   /** Selected games not in the queue. Ties draw substitutes from here. */
   substitutePoolIds: GameId[];
-  handicaps: Handicap[];
+
+  // ---- Play ----
   /** Rounds played so far, including scratched ones, in order. */
   rounds: Round[];
   status: SessionStatus;

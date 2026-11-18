@@ -59,7 +59,7 @@ export const SAMPLE_PROFILES: Profile[] = [
 /**
  * Hardcoded handicap ideas. Later the site will generate these from
  * profile stats (Alex's 1450 vs Sam's 900 Elo suggests Alex loses the queen).
- * For now Handicap setup just shows the ones that fit the current session.
+ * For now the Session options screen just shows the ones that fit the session.
  */
 export const SUGGESTED_HANDICAPS: Handicap[] = [
   {
