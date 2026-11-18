@@ -25,18 +25,20 @@ const h2hRows = friendIds.map((friendId) => {
   return h('tr', {}, h('td', {}, usernameOf(state, friendId)), h('td', {}, mine), h('td', {}, theirs));
 });
 
-// ---- Leaderboard: you and your friends, by current win streak ----------------
+// ---- Leaderboard: you and your friends, by total session wins ---------------
+// Ties on wins go to whoever needed fewer sessions to get them (better win
+// rate). That tie-break is an assumption; see docs/UPDATE_2026-11-18.md.
 const circle = new Set([user.id, ...friendIds]);
 const board = state.leaderboard
   .filter((e) => circle.has(e.userId))
-  .sort((a, b) => b.currentWinStreak - a.currentWinStreak || b.bestWinStreak - a.bestWinStreak);
+  .sort((a, b) => b.sessionsWon - a.sessionsWon || a.sessionsPlayed - b.sessionsPlayed);
 const boardRows = board.map((e, i) =>
   h('tr', {},
     h('td', {}, i + 1),
     h('td', {}, usernameOf(state, e.userId)),
+    h('td', {}, e.sessionsWon),
+    h('td', {}, e.sessionsPlayed),
     h('td', {}, e.currentWinStreak),
-    h('td', {}, e.bestWinStreak),
-    h('td', {}, `${e.sessionsWon}/${e.sessionsPlayed}`),
   ),
 );
 
@@ -48,10 +50,10 @@ mount(root,
         ...h2hRows)
     : h('p', {}, 'No friends yet.'),
   placeholder('add friends by username here.'),
-  h('h2', {}, 'Leaderboard (all games)'),
+  h('h2', {}, 'Leaderboard (total session wins, all games)'),
   boardRows.length
     ? h('table', { border: 1 },
-        h('tr', {}, h('th', {}, '#'), h('th', {}, 'Player'), h('th', {}, 'Current streak'), h('th', {}, 'Best streak'), h('th', {}, 'Won/Played')),
+        h('tr', {}, h('th', {}, '#'), h('th', {}, 'Player'), h('th', {}, 'Total wins'), h('th', {}, 'Sessions played'), h('th', {}, 'Current streak')),
         ...boardRows)
     : h('p', {}, 'Nothing to rank yet.'),
   h('h2', {}, 'Chat'),
