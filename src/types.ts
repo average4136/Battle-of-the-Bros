@@ -180,7 +180,7 @@ export type RoundOutcome =
       reportedBy: UserId;
       /** OPEN: does an opponent need to confirm a reported result? */
       confirmedBy?: UserId;
-      /** OPEN: only meaningful once "fastest-total" is defined. */
+      /** Unused until "fastest-total" (coming later) is designed. */
       timeSeconds?: number;
     }
   | {

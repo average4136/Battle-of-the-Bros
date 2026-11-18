@@ -43,9 +43,6 @@ if (!session || session.status === 'setup') {
     },
       h('p', {}, 'Who won?'),
       ...s.playerIds.map((id, i) => h('p', {}, h('label', {}, winnerRadios[i], ' ', usernameOf(state, id)))),
-      s.format.kind === 'fastest-total'
-        ? openNote('in "fastest completion" mode, should players report a time here instead of (or as well as) a winner?')
-        : null,
       h('button', { type: 'submit' }, 'Report result'),
     );
 

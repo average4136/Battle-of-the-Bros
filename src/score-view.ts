@@ -17,7 +17,7 @@ export function formatSummary(session: Session): string {
   const { kind, gameCount } = session.format;
   return kind === 'best-of'
     ? `Best of ${gameCount}: first to ${winsNeeded(session.format)} wins.`
-    : `Fastest completion of ${gameCount} games (rules OPEN).`;
+    : `Fastest completion of ${gameCount} games (coming later).`;
 }
 
 export function describeRound(state: PrototypeState, round: Round): string {
