@@ -17,8 +17,8 @@ if (!session || session.status !== 'finished') {
 } else {
   const s = session;
   mount(root, 
+    // A tied session stays a tie: there's no sudden-death game (decided).
     h('h2', {}, s.winnerId ? `${usernameOf(state, s.winnerId)} wins!` : "It's a tie!"),
-    s.winnerId ? null : openNote('how should a tied session be broken (a sudden-death game?), or does it just stay a tie?'),
     scoreTable(state, s),
     h('h2', {}, 'Rounds'),
     roundHistory(state, s),

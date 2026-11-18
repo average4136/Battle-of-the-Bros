@@ -86,8 +86,9 @@ export function winsNeeded(format: SessionFormat): number {
 /**
  * Finish the session if it's decided. Best-of ends early once someone
  * reaches a majority. Otherwise it ends when the queue runs out, and the
- * most wins takes it. A tie for most wins leaves winnerId unset.
- * (Tie-breaks and "fastest-total" are OPEN.)
+ * most wins takes it. Equal wins is a tied session: winnerId stays unset
+ * and it stays a tie (decided: no sudden-death game). "fastest-total" isn't
+ * built yet, so only best-of can be chosen.
  */
 function finishIfDecided(session: Session): void {
   const tally = scores(session);
