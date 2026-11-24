@@ -7,20 +7,28 @@
     <link rel="icon" href="data:," />
     <title>Battle of the Bros</title>
   </head>
-  <body>
-    <main>
-      <h1>Battle of the Bros</h1>
-      <p>Organize a minigame competition with your friends: pick games, randomize the order, set handicaps and keep score. You play the games themselves wherever you like.</p>
-      <!-- Filled in by /src/pages/home.ts -->
-      <div id="app"></div>
-      <h2>Go to</h2>
-      <ul>
-        <li><a href="/pages/login.html">Sign up / Log in</a></li>
-        <li><a href="/pages/profile.html">Your profile</a></li>
-        <li><a href="/pages/friends.html">Friends / Leaderboard</a></li>
-        <li><a href="/pages/games.html">Game list</a></li>
-      </ul>
-    </main>
+  <body class="home">
+    <!-- The stage is a fixed 1280 x 890 drawing, scaled to fit the window.
+         Everything inside is placed at exact positions by home.css.
+         The wrapper takes up the stage's scaled size, so the page centres it. -->
+    <div class="stage-wrap">
+      <main class="stage">
+        <h1 class="art title"><img src="/art/title/title.png" alt="Battle of the Bros" /></h1>
+        <img class="art byline" src="/art/title/byline.png" alt="a game of games by Peyton" />
+
+        <!-- Decorations: hidden from screen readers. Each has its own class to style it separately. -->
+        <img class="art piece-card" src="/art/title/card.png" alt="" aria-hidden="true" />
+        <img class="art piece-key" src="/art/title/key.png" alt="" aria-hidden="true" />
+        <img class="art piece-blocks" src="/art/title/blocks.png" alt="" aria-hidden="true" />
+        <img class="art piece-bishop" src="/art/title/bishop.png" alt="" aria-hidden="true" />
+        <img class="art piece-knight" src="/art/title/knight.png" alt="" aria-hidden="true" />
+        <img class="art piece-stopwatch" src="/art/title/stopwatch.png" alt="" aria-hidden="true" />
+        <img class="art piece-pin" src="/art/title/pin.png" alt="" aria-hidden="true" />
+
+        <!-- Buttons: filled in by /src/pages/home.ts -->
+        <div id="app"></div>
+      </main>
+    </div>
     <!-- type="module" lets the script use import/export; Vite resolves the .ts file. -->
     <script type="module" src="/src/pages/home.ts"></script>
   </body>
