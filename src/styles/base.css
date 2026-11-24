@@ -1,0 +1,28 @@
+/* Shared styles every styled page can import: the handwriting font and the
+   colour palette. Page-specific styles go in their own file (e.g. home.css). */
+
+/* Peyton's handwriting font. Files in public/ are served from the site root,
+   so public/fonts/... is at /fonts/... */
+@font-face {
+  font-family: 'Peytonesque';
+  src: url('/fonts/Peytonesque-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  /* Show the fallback font straight away, then swap in Peytonesque once it loads. */
+  font-display: swap;
+}
+
+:root {
+  /* Palette */
+  --bg: #DC9770;      /* page background (wide stripes) */
+  --stripe: #D5856F;  /* thin stripes over the background */
+  --sage: #AFBC8F;    /* main button fill (PLAY) */
+  --teal: #729482;    /* secondary button fill (login, join room) */
+  --shadow: #AF5F56;  /* flat drop shadows under buttons */
+  --ink: #141414;     /* outlines and text */
+  --cream: #F2E2B0;   /* light fill: inputs, panels */
+
+  /* Peytonesque has no _ @ = : ; characters. When a character is missing,
+     the browser draws just that character in the next font in the list. */
+  --font-hand: 'Peytonesque', 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+}
