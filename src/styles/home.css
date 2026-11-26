@@ -1,0 +1,226 @@
+/* Title page only. Shared font + colours come from base.css.
+   All positions and sizes are in px on the 1280 x 890 stage, so they match
+   the hand-drawn design. The whole stage is then scaled to fit the window. */
+
+/* ---- Page and stage ------------------------------------------------------ */
+
+body.home {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden; /* never scroll sideways */
+  /* Centre the stage both ways. */
+  display: grid;
+  place-items: center;
+  /* Diagonal stripes over the whole window, not just the stage. */
+  background: repeating-linear-gradient(25.6deg, var(--bg) 0 19.8px, var(--stripe) 19.8px 33.5px);
+  color: var(--ink);
+  font-family: var(--font-hand);
+}
+
+/* Takes up the stage's *scaled* size, so centring works.
+   --stage-scale is set by src/fit-stage.js (1 = actual size). */
+.stage-wrap {
+  position: relative;
+  width: calc(1280px * var(--stage-scale, 1));
+  height: calc(890px * var(--stage-scale, 1));
+}
+
+/* The fixed-size drawing. Everything inside uses position: absolute. */
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: 890px;
+  transform: scale(var(--stage-scale, 1));
+  transform-origin: top left;
+}
+
+/* ---- Art (left, top, width from the design; height follows the image) ---- */
+
+.art {
+  position: absolute;
+  margin: 0;
+  height: auto;
+}
+
+.title          { left: 71px;  top: 36px;  width: 1007px; }
+.title img      { display: block; width: 100%; height: auto; }
+.byline         { left: 926px; top: 156px; width: 142px; }
+.piece-card     { left: 158px; top: 238px; width: 100px; }
+.piece-key      { left: 779px; top: 312px; width: 87px; }
+.piece-blocks   { left: 900px; top: 389px; width: 302px; }
+.piece-bishop   { left: 90px;  top: 427px; width: 98px; }
+.piece-knight   { left: 216px; top: 467px; width: 132px; }
+.piece-stopwatch { left: 674px; top: 609px; width: 143px; }
+.piece-pin      { left: 299px; top: 721px; width: 69px; }
+
+/* ---- Hand-drawn buttons -------------------------------------------------- */
+/* Shared look: thick ink outline, wobbly corners, flat shadow down-left.
+   On hover the button moves down-left and its shadow shrinks by the same
+   amount, so the shadow stays put and the button looks pushed in. */
+
+.sketch-button {
+  position: absolute;
+  box-sizing: border-box; /* width/height include the border */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 6px solid var(--ink);
+  /* Different radius on each corner (horizontal / vertical) = hand-drawn look. */
+  border-radius: 30px 14px 34px 12px / 16px 32px 12px 28px;
+  color: var(--ink);
+  font-family: var(--font-hand);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: translate 0.08s, box-shadow 0.08s;
+}
+
+.sketch-button:focus-visible {
+  outline: 4px dashed var(--cream);
+  outline-offset: 6px;
+}
+
+/* 1. PLAY */
+.play-button {
+  left: 440px;
+  top: 231px;
+  width: 279px;
+  height: 184px;
+  padding: 0;
+  font-size: 104px;
+  background: var(--sage);
+  rotate: -3deg;
+  box-shadow: -30px 18px 0 var(--shadow);
+}
+.play-button:hover  { translate: -10px 6px;  box-shadow: -20px 12px 0 var(--shadow); }
+.play-button:active { translate: -20px 12px; box-shadow: -10px 6px 0 var(--shadow); }
+
+/* 2. login / signup (or your username when logged in) */
+.login-button {
+  left: 422px;
+  top: 429px;
+  width: 329px;
+  height: 84px;
+  font-size: 46px;
+  background: var(--teal);
+  rotate: -5deg;
+  box-shadow: -24px 14px 0 var(--shadow);
+  border-radius: 18px 34px 14px 30px / 30px 14px 34px 16px;
+}
+/* Long usernames: shrink a little and cut off with "..." instead of overflowing. */
+.login-button span {
+  max-width: 100%;
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 3. join room: one box holding a label, the code input and a "go" button. */
+.join-box {
+  left: 425px;
+  top: 523px;
+  width: 329px;
+  height: 84px;
+  margin: 0;
+  padding: 0 12px;
+  gap: 10px;
+  justify-content: space-between;
+  background: var(--teal);
+  rotate: -4deg;
+  box-shadow: -24px 14px 0 var(--shadow);
+  border-radius: 34px 16px 28px 14px / 14px 30px 16px 32px;
+  cursor: default;
+}
+
+.join-box label {
+  font-size: 36px;
+  white-space: nowrap;
+}
+
+.join-box input {
+  box-sizing: border-box;
+  width: 104px;
+  height: 52px;
+  padding: 4px 0 0;
+  border: 4px solid var(--ink);
+  border-radius: 12px 6px 14px 8px / 8px 14px 6px 12px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 36px;
+  text-align: center;
+  text-transform: uppercase; /* show what you type in capitals */
+}
+.join-box input::placeholder {
+  color: var(--ink);
+  opacity: 0.35;
+}
+
+.go-button {
+  box-sizing: border-box;
+  height: 52px;
+  padding: 4px 10px 0;
+  border: 4px solid var(--ink);
+  border-radius: 14px 8px 12px 6px / 6px 12px 8px 14px;
+  background: var(--sage);
+  color: var(--ink);
+  font-family: var(--font-hand);
+  font-size: 34px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: -6px 4px 0 var(--shadow);
+  transition: translate 0.08s, box-shadow 0.08s;
+}
+.go-button:hover  { translate: -2px 1px; box-shadow: -4px 3px 0 var(--shadow); }
+.go-button:active { translate: -4px 3px; box-shadow: -2px 1px 0 var(--shadow); }
+
+/* "back to room ABCD": only shown when you're already in a room. */
+.back-to-room {
+  position: absolute;
+  left: 440px;
+  top: 640px;
+  color: var(--ink);
+  font-size: 32px;
+}
+
+/* ---- Prototype "dev" button (bottom-right, outside the stage) ------------ */
+/* Built by src/dev-panel.js. Holds the login status, site map, Reset and View as. */
+
+.dev-tools {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  /* Plain readable font: these tools use colons, which Peytonesque lacks. */
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+.dev-toggle {
+  padding: 4px 10px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.dev-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--cream);
+}
+/* The [hidden] attribute normally hides things; this makes sure no rule above overrides it. */
+.dev-panel[hidden] {
+  display: none;
+}
