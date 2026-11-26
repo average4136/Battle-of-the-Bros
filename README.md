@@ -7,7 +7,7 @@ Originally inspired by the old Ludwig bro vs bro videos, Battle of the Bros is a
 Battle of the Bros is a 1v1 rapid-fire minigame competition. Some popular BOTB games include: Wordle, Chess, typeracer, wikipedia speedrunning, tetris and various (mostly browser based) games. 
 
 ## How to play?
-All you have to do is click this (link here eventually) link, pick your username and invite your bro! It's designed to be simple and intuitive in a way that just works.
+All you have to do is click this (link here eventually) link, create an account, set up a room and invite your bro! It's designed to be simple and intuitive in a way that just works.
 
 Created by Peyton Petersen
 
@@ -20,4 +20,4 @@ npm run dev      # http://localhost:5173
 npm run build    # static site in dist/
 ```
 
-See [docs/FOUNDATION_NOTES.md](docs/FOUNDATION_NOTES.md) for how it's put together and the open questions.
+See [docs/FOUNDATION_NOTES.md](docs/FOUNDATION_NOTES.md) for how it's put together.
